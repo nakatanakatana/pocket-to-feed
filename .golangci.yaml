@@ -1,0 +1,38 @@
+linters:
+  disable:
+    - exhaustivestruct
+    - gochecknoglobals
+    - exhaustruct
+
+    # deprecated
+    - scopelint
+    - maligned
+    - golint
+    - interfacer
+  presets:
+    - bugs
+    # - comment
+    - unused
+    - complexity
+    - error
+    - format
+    - import
+    # - metalinter
+    - module
+    - performance
+    # - sql
+    - style
+    - test
+
+linters-settings:
+  stylecheck:
+    checks: ["all", "-ST1005"]
+  tagliatelle:
+    case:
+      use-field-name: true
+      rules:
+        json: snake
+  varnamelen:
+    ignore-decls:
+      - w http.ResponseWriter
+      - r *http.Request
