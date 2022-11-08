@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gorilla/feeds"
@@ -34,24 +35,36 @@ func (h *PocketFeedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		retriveOpt.Tag = tagParam[0]
 	}
 
-	results, err := h.cli.Retrieve(retriveOpt)
+	result, err := h.cli.Retrieve(retriveOpt)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	var latestAdded, latestUpdated time.Time
-
-	items := make([]*feeds.Item, len(results.List))
+	pocketItems := make([]pocket.Item, len(result.List))
 	index := 0
 
-	for _, result := range results.List {
-		items[index] = &feeds.Item{
+	for _, pocketItem := range result.List {
+		pocketItems[index] = pocketItem
+		index++
+	}
+
+	sort.Slice(
+		pocketItems,
+		func(i, j int) bool {
+			return time.Time(pocketItems[i].TimeAdded).After(time.Time(pocketItems[j].TimeAdded))
+		})
+
+	var latestAdded, latestUpdated time.Time
+
+	items := make([]*feeds.Item, len(pocketItems))
+
+	for i, result := range pocketItems {
+		items[i] = &feeds.Item{
 			Title:   result.Title(),
 			Link:    &feeds.Link{Href: result.URL()},
 			Created: time.Time(result.TimeAdded),
 			Updated: time.Time(result.TimeUpdated),
 		}
-		index++
 
 		if time.Time(result.TimeAdded).After(latestAdded) {
 			latestAdded = time.Time(result.TimeAdded)
