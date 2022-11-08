@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 env:
-  IMAGE_NAME: go-template
+  IMAGE_NAME: pocket-to-feed
 
 jobs:
   push_to_registry:

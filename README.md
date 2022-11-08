@@ -1,1 +1,1 @@
-# go-template
+# pocket-to-feed
