@@ -26,8 +26,11 @@ func (h *PocketFeedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	feed := &feeds.Feed{
+		Title: h.cfg.Title,
+		Link:  &feeds.Link{Href: h.cfg.URL},
+	}
 	retriveOpt := &pocket.RetrieveOption{}
-
 	*retriveOpt = *h.defualtOpt
 	queries := r.URL.Query()
 
@@ -38,6 +41,16 @@ func (h *PocketFeedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	result, err := h.cli.Retrieve(retriveOpt)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	if result == nil {
+		if err := feed.WriteRss(w); err != nil {
+			log.Println("toRSS:", err)
+
+			return
+		}
+
+		return
 	}
 
 	pocketItems := make([]pocket.Item, len(result.List))
@@ -75,25 +88,14 @@ func (h *PocketFeedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("%+v, %+v\n", latestAdded, latestUpdated)
+	feed.Created = latestAdded
+	feed.Updated = latestUpdated
+	feed.Items = items
 
-	feed := &feeds.Feed{
-		Title:   h.cfg.Title,
-		Link:    &feeds.Link{Href: h.cfg.URL},
-		Created: latestAdded,
-		Updated: latestUpdated,
-		Items:   items,
-	}
-
-	rss, err := feed.ToRss()
-	if err != nil {
+	if err := feed.WriteRss(w); err != nil {
 		log.Println("toRSS:", err)
 
 		return
-	}
-
-	if _, err := w.Write([]byte(rss)); err != nil {
-		log.Println("write:", err)
 	}
 }
 
