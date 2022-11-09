@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"sort"
 	"time"
 
@@ -30,20 +31,9 @@ func (h *PocketFeedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Title: h.cfg.Title,
 		Link:  &feeds.Link{Href: h.cfg.URL},
 	}
-	retriveOpt := &pocket.RetrieveOption{}
-	*retriveOpt = *h.defualtOpt
-	queries := r.URL.Query()
 
-	if tagParam, ok := queries["tag"]; ok {
-		retriveOpt.Tag = tagParam[0]
-	}
-
-	result, err := h.cli.Retrieve(retriveOpt)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	if result == nil {
+	result, err := h.retrievePocket(r.URL.Query())
+	if err != nil || result == nil {
 		if err := feed.WriteRss(w); err != nil {
 			log.Println("toRSS:", err)
 
@@ -97,6 +87,18 @@ func (h *PocketFeedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+}
+
+func (h *PocketFeedHandler) retrievePocket(queries url.Values) (*pocket.RetrieveResult, error) {
+	retriveOpt := &pocket.RetrieveOption{}
+	*retriveOpt = *h.defualtOpt
+
+	if tagParam, ok := queries["tag"]; ok {
+		retriveOpt.Tag = tagParam[0]
+	}
+
+	//nolint:wrapcheck
+	return h.cli.Retrieve(retriveOpt)
 }
 
 func createPocketFeedHandler(cfg Config, cli *pocket.Client, defaultOpt *pocket.RetrieveOption) *PocketFeedHandler {
