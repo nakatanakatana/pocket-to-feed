@@ -1,4 +1,4 @@
-module github.com/nakatanakatana/go-template
+module github.com/nakatanakatana/pocket-to-feed
 
 go 1.18
 
