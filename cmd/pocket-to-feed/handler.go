@@ -19,9 +19,9 @@ type PocketFeedHandler struct {
 	defualtOpt *pocket.RetrieveOption
 }
 
-//nolint:funlen
+//nolint:funlen,cyclop
 func (h *PocketFeedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	if !(r.Method == http.MethodGet || r.Method == http.MethodHead) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 
 		return
